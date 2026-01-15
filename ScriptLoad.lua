@@ -36,6 +36,16 @@ local GameList = {
 	[7061783500] = "2fb6765dd4c0e2894dd107dd9e14c340", -- 2 Player Battle Tycoon
 }
 
+-- Mapeamento direto para URLs dos scripts (REMOVENDO DEPENDÊNCIA DA LUARMOR)
+local DirectScriptUrls = {
+	[994732206] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/BloxFruit.lua",
+	[7018190066] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/DeadRails.lua",
+	[383310974] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/AdoptMe.lua",
+	[4777817887] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/BladeBall.lua",
+	[5477548919] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/StarRail.lua",
+	-- Adicione mais URLs conforme necessário
+}
+
 for id, scriptid in pairs(GameList) do
 	if id == GameId then
 		isSupport = scriptid
@@ -63,13 +73,6 @@ PreloadID = {
 	"rbxassetid://4560909609",
 	"rbxassetid://12187376174",
 }
-UI_LOCK = true
-
-function isNotLocked(v)
-	if not v:GetAttribute("Locked") and UI_LOCK == false then
-		return true
-	end
-end
 
 do
 	HOHO_Passcheck = Instance.new("ScreenGui")
@@ -142,7 +145,6 @@ do
 	Status.Text = "Loading HoHo Hub..."
 	Status.BackgroundTransparency = 1
 	Status.Parent = TextHolder
-	Status:SetAttribute("EngText",Status.Text)
 
 	UITextSizeConstraint.MaxTextSize = 20
 	UITextSizeConstraint.Parent = Status
@@ -238,48 +240,54 @@ do
 	UICorner.CornerRadius = UDim.new(0, 30)
 	UICorner.Parent = INTRO
 
-	HOHO_Gen4 = Instance.new("ScreenGui")
-	NOTIFICATION_ZONE = Instance.new("Frame")
-	UIListLayout_Main = Instance.new("UIListLayout")
-	UIAspectRatioConstraint_Main = Instance.new("UIAspectRatioConstraint")
-
-	HOHO_Gen4.IgnoreGuiInset = true
-	HOHO_Gen4.Enabled = true
-	HOHO_Gen4.ResetOnSpawn = false
-	HOHO_Gen4.Name = "Hоhо_gеn4"
-	HOHO_Gen4.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
-	HOHO_Gen4.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    CoreGuiAdd(HOHO_Gen4)
-
-	NOTIFICATION_ZONE.BorderSizePixel = 0
-	NOTIFICATION_ZONE.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	NOTIFICATION_ZONE.AnchorPoint = Vector2.new(1, 1)
-	NOTIFICATION_ZONE.Size = UDim2.new(0.213415, 0, 1, 0)
-	NOTIFICATION_ZONE.ClipsDescendants = true
-	NOTIFICATION_ZONE.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	NOTIFICATION_ZONE.BackgroundTransparency = 1
-	NOTIFICATION_ZONE.Name = "NOTIFICATION_ZONE"
-	NOTIFICATION_ZONE.Position = UDim2.new(1, 0, 1, 0)
-	NOTIFICATION_ZONE.Parent = HOHO_Gen4
-
-	UIListLayout_Main.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	UIListLayout_Main.VerticalAlignment = Enum.VerticalAlignment.Bottom
-	UIListLayout_Main.SortOrder = Enum.SortOrder.LayoutOrder
-	UIListLayout_Main.Parent = NOTIFICATION_ZONE
-
-	UIAspectRatioConstraint_Main.AspectRatio = 0.424757
-	UIAspectRatioConstraint_Main.Parent = NOTIFICATION_ZONE
-
 	INTRO.GroupTransparency = 1
 
-	local api = loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
-	api.script_id = isSupport
-
-	local destroyUI = function()
+	local function destroyUI()
 		HOHO_Passcheck:Destroy()
-		HOHO_Gen4:Destroy()
 	end
 
+	local function loadGameScript()
+		-- Primeiro tenta carregar pelo URL direto
+		if DirectScriptUrls[GameId] then
+			local success, err = pcall(function()
+				local scriptContent = game:HttpGet(DirectScriptUrls[GameId])
+				if scriptContent and scriptContent:len() > 100 then
+					loadstring(scriptContent)()
+					return true
+				end
+			end)
+			
+			if success then
+				return
+			end
+		end
+		
+		-- Fallback 1: Tenta carregar do repositório principal
+		local fallbackUrls = {
+			"https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/loader.lua",
+			"https://raw.githubusercontent.com/acsu123/HohoV2/main/loader.lua",
+			"https://raw.githubusercontent.com/acsu123/HOHO-HUB/main/loader.lua"
+		}
+		
+		for _, url in ipairs(fallbackUrls) do
+			local success, err = pcall(function()
+				local scriptContent = game:HttpGet(url)
+				if scriptContent then
+					loadstring(scriptContent)()
+					return true
+				end
+			end)
+			
+			if success then
+				return
+			end
+		end
+		
+		-- Fallback 2: Carrega script genérico
+		loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HohoV2/refs/heads/main/ScriptLoadButOlder.lua'))()
+	end
+
+    -- Sistema de intro (opcional)
     if (isfile("HoHo_Intro.txt") and (tick() - tonumber(readfile("HoHo_Intro.txt"))) >= 86400) or not isfile("HoHo_Intro.txt") then
         writefile("HoHo_Intro.txt", tostring(tick()))
 
@@ -305,27 +313,26 @@ do
         end
 
         TweenService:Create(INTRO,INFO_DOT25_QUAD,{GroupTransparency = 1}):Play()
-
+        
         task.wait(.5)
-        task.spawn(request, {
-            Url = 'http://127.0.0.1:6463/rpc?v=1',
-            Method = 'POST',
-            Headers = {
-                ['Content-Type'] = 'application/json',
-                ['origin'] = 'https://ptb.discord.com',
-            },
-            Body = HttpService:JSONEncode({
-                ['args'] = {
-                ['code'] = 'hohohub',
-                ['sex'] = '?species=Goblin&realm=Toril'
-            },
-            ['cmd'] = 'INVITE_BROWSER',
-            ['nonce'] = 'OwO'
-        })})
+    else
+        -- Se não mostrar intro, carrega direto
+        task.wait(1)
     end
 
-	-- Carregar o script diretamente sem verificação de chave
+	-- Carrega o script do jogo
 	delay(0.2, destroyUI)
-	wait(.25)
-	api.load_script()
+	task.wait(.25)
+	loadGameScript()
+	
+	-- Notificação de sucesso
+	task.spawn(function()
+		wait(1)
+		StarterGui:SetCore("SendNotification",{
+			Title = "HoHo Hub",
+			Text = "Script carregado com sucesso!",
+			Icon = "rbxassetid://16276677105",
+			Duration = 3
+		})
+	end)
 end
