@@ -12,54 +12,22 @@ repeat task.wait() until game:IsLoaded() and Players.LocalPlayer
 
 plr = Players.LocalPlayer
 
-local isSupport = nil
-local GameList = {
-	[994732206] = "e4aedc7ccd2bacd83555baa884f3d4b1", -- Blox Fruit
-	[7018190066] = "bf149e75708e91ad902bd72e408fae02", -- Dead Rails
-	[383310974] = "b83e9255dc81e9392da975a89d26e363", -- Adopt Me
-	[4777817887] = "35ad587b07c00b82c218fcf0e55eeea6", -- Blade Ball
-	[5477548919] = "0a9bfef9eb03d0cb17dd85451e4be696", -- Honkai Star Rail Simulator
-	[5750914919] = "b94343ca266a778e5da8d72e92d4aab5", -- Fisch
-	[3359505957] = "095fbd843016a7af1d3a9ee88714c64a", -- Collect All Pets
-	[6167925365] = "e220573a9f986e150c6af8d4d1fb9b7c", -- Cong Dong Viet Nam
-	[5361032378] = "ff4e04500b94246eaa3f5c5be92a8b4a", -- Sol's RNG
-	[7709344486] = "1d5eea7e66ccb5ca4d11c26ff2d4c6b1", -- Steal a Brainrot
-	[7326934954] = "0aa67223637322085cfeaf80ae9af69f", -- 99 Nights in the Forest
-	[3149100453] = "dbe59157859f6030587fd61ad4faad75", -- Eat Blob Simulator
-	[5995470825] = "83363ffca1175ef0c06d4028b77061a4", -- Hypershot
-	[358276974] = "23e50d188c7e27477a1c6eacb076e2ba", -- Apocalypse Rising 2
-	[7541395924] = "c924e9543f9651c9cc1afabfe1f3de65", -- Build An Island
-	[6701277882] = "1c48d56d18692670e5278e1df94997d8", -- Fish It
-	[953622098] = "12933a8f18ec406f1ee26bbdc3b73abf", -- Word Bomb
-	[7200297228] = "da7549d939f1a496dca0b8d3610196b5", -- Loot Hero
-	[7832036655] = "456662bcac892ece28c0062bbe1a7a66", -- Arena Of Blox
-	[7061783500] = "2fb6765dd4c0e2894dd107dd9e14c340", -- 2 Player Battle Tycoon
+-- REMOVENDO A DEPENDÊNCIA DO SISTEMA DE CHAVES
+-- Usaremos scripts do SEU GitHub
+
+local GameScripts = {
+    -- Blox Fruits (seu script principal)
+    [994732206] = "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/BloxFruit.lua",
+    
+    -- Outros jogos podem ser adicionados aqui
+    -- [ID_DO_JOGO] = "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/NomeDoScript.lua"
+    
+    -- Blade Ball (exemplo)
+    [4777817887] = "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/BladeBall.lua",
+    
+    -- Adopt Me (exemplo)
+    [383310974] = "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/AdoptMe.lua",
 }
-
--- Mapeamento direto para URLs dos scripts (REMOVENDO DEPENDÊNCIA DA LUARMOR)
-local DirectScriptUrls = {
-	[994732206] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/BloxFruit.lua",
-	[7018190066] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/DeadRails.lua",
-	[383310974] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/AdoptMe.lua",
-	[4777817887] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/BladeBall.lua",
-	[5477548919] = "https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/GameScripts/StarRail.lua",
-	-- Adicione mais URLs conforme necessário
-}
-
-for id, scriptid in pairs(GameList) do
-	if id == GameId then
-		isSupport = scriptid
-	end
-end
-
-if _G.loadCustomId then
-	isSupport = _G.loadCustomId
-end
-
-if not isSupport then
-	loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HohoV2/refs/heads/main/ScriptLoadButOlder.lua'))()
-	wait(9e9)
-end
 
 INFO_DOT25_QUAD = TweenInfo.new(.25,Enum.EasingStyle.Quad)
 
@@ -96,7 +64,7 @@ do
 
 	HOHO_Passcheck.IgnoreGuiInset = true
 	HOHO_Passcheck.ResetOnSpawn = false
-	HOHO_Passcheck.Name = "Hоhо_раssсhесk"
+	HOHO_Passcheck.Name = "HoHo_Loader"
 	HOHO_Passcheck.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 	HOHO_Passcheck.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     CoreGuiAdd(HOHO_Passcheck)
@@ -242,52 +210,70 @@ do
 
 	INTRO.GroupTransparency = 1
 
-	local function destroyUI()
-		HOHO_Passcheck:Destroy()
-	end
+    -- Função para carregar scripts do SEU GitHub
+    local function loadFromYourGitHub()
+        local gameId = GameId
+        local scriptUrl = GameScripts[gameId]
+        
+        if scriptUrl then
+            Status.Text = "Loading game script..."
+            
+            local success, err = pcall(function()
+                local scriptContent = game:HttpGet(scriptUrl)
+                if scriptContent and #scriptContent > 100 then
+                    loadstring(scriptContent)()
+                    return true
+                end
+            end)
+            
+            if success then
+                Status.Text = "Success! Closing loader..."
+                StarterGui:SetCore("SendNotification",{
+                    Title = "HoHo Hub",
+                    Text = "Script loaded successfully!",
+                    Icon = "rbxassetid://16276677105",
+                    Duration = 3
+                })
+                return true
+            else
+                Status.Text = "Error loading script..."
+                return false
+            end
+        end
+        
+        return false
+    end
+    
+    -- Função para carregar fallback
+    local function loadFallback()
+        Status.Text = "Loading fallback script..."
+        
+        local fallbackUrls = {
+            "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/loader.lua",
+            "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/Main.lua",
+            "https://raw.githubusercontent.com/Liandersson/MeuHoHoPrivado/main/Script.lua"
+        }
+        
+        for _, url in ipairs(fallbackUrls) do
+            local success, err = pcall(function()
+                local scriptContent = game:HttpGet(url)
+                if scriptContent and #scriptContent > 100 then
+                    loadstring(scriptContent)()
+                    return true
+                end
+            end)
+            
+            if success then
+                return true
+            end
+        end
+        
+        -- Último fallback
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/acsu123/HohoV2/refs/heads/main/ScriptLoadButOlder.lua"))()
+        return true
+    end
 
-	local function loadGameScript()
-		-- Primeiro tenta carregar pelo URL direto
-		if DirectScriptUrls[GameId] then
-			local success, err = pcall(function()
-				local scriptContent = game:HttpGet(DirectScriptUrls[GameId])
-				if scriptContent and scriptContent:len() > 100 then
-					loadstring(scriptContent)()
-					return true
-				end
-			end)
-			
-			if success then
-				return
-			end
-		end
-		
-		-- Fallback 1: Tenta carregar do repositório principal
-		local fallbackUrls = {
-			"https://raw.githubusercontent.com/acsu123/HOHO_HUB/main/loader.lua",
-			"https://raw.githubusercontent.com/acsu123/HohoV2/main/loader.lua",
-			"https://raw.githubusercontent.com/acsu123/HOHO-HUB/main/loader.lua"
-		}
-		
-		for _, url in ipairs(fallbackUrls) do
-			local success, err = pcall(function()
-				local scriptContent = game:HttpGet(url)
-				if scriptContent then
-					loadstring(scriptContent)()
-					return true
-				end
-			end)
-			
-			if success then
-				return
-			end
-		end
-		
-		-- Fallback 2: Carrega script genérico
-		loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HohoV2/refs/heads/main/ScriptLoadButOlder.lua'))()
-	end
-
-    -- Sistema de intro (opcional)
+    -- Sistema de intro
     if (isfile("HoHo_Intro.txt") and (tick() - tonumber(readfile("HoHo_Intro.txt"))) >= 86400) or not isfile("HoHo_Intro.txt") then
         writefile("HoHo_Intro.txt", tostring(tick()))
 
@@ -305,34 +291,38 @@ do
 
         TweenService:Create(INTRO,INFO_DOT25_QUAD,{GroupTransparency = 0}):Play()
         task.wait(.5)
-        for i = 1, #preload_content do
-            local asset = preload_content[i]
-            local progress = i / #preload_content
+        
+        -- Animação de loading
+        for i = 1, 20 do
+            local progress = i / 20
             TweenService:Create(Content,TweenInfo.new(.1,Enum.EasingStyle.Quad),{Size = UDim2.new(progress,0,1,0)}):Play()
+            Status.Text = "Loading... " .. math.floor(progress * 100) .. "%"
             task.wait(math.random(1,5)/50)
         end
+        
+        Status.Text = "Finalizing..."
 
         TweenService:Create(INTRO,INFO_DOT25_QUAD,{GroupTransparency = 1}):Play()
-        
         task.wait(.5)
     else
         -- Se não mostrar intro, carrega direto
         task.wait(1)
     end
 
-	-- Carrega o script do jogo
-	delay(0.2, destroyUI)
-	task.wait(.25)
-	loadGameScript()
-	
-	-- Notificação de sucesso
-	task.spawn(function()
-		wait(1)
-		StarterGui:SetCore("SendNotification",{
-			Title = "HoHo Hub",
-			Text = "Script carregado com sucesso!",
-			Icon = "rbxassetid://16276677105",
-			Duration = 3
-		})
-	end)
+    -- Carregar o script
+    task.wait(1)
+    
+    local loaded = loadFromYourGitHub()
+    
+    if not loaded then
+        Status.Text = "Trying fallback..."
+        task.wait(0.5)
+        loadFallback()
+    end
+    
+    -- Fechar interface após carregar
+    task.wait(1)
+    TweenService:Create(INTRO, INFO_DOT25_QUAD, {GroupTransparency = 1}):Play()
+    task.wait(0.5)
+    HOHO_Passcheck:Destroy()
 end
